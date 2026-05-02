@@ -157,13 +157,37 @@ function showResult() {
     // 「スコアがどちらも拮抗」かつ「指の回答が矛盾」している場合にエラー
     const forceError = (isCloseAB && isCloseCP && isMismatch);
 
-    // 共有用変数の定義（エラー時・通常時共通で使用）
-    const shareUrl = encodeURIComponent(window.location.href);
-    const defaultShareText = encodeURIComponent(`ゴルフスイングタイプ診断であなたの身体特性をチェックしよう！\n#ゴルフスイング診断 #4スタンス理論 #JoaGOLFstudio`);
-    const defaultLineText = `ゴルフスイングタイプ診断！あなたの身体特性に合ったスイングをチェック！\n${window.location.href}`;
-    const defaultLineUrl = `https://line.me/R/msg/text/?${encodeURIComponent(defaultLineText)}`;
+    // 共通の全タイプ一覧HTMLを生成する部分
+    const allTypesHtml = `
+        <div id="all-types-list" style="display:none; margin-top: 60px; text-align: left;">
+            <hr style="margin: 60px 0; border: 0; border-top: 2px solid #eee;">
+            <h2 style="text-align:center; margin-bottom: 40px;">全タイプ一覧</h2>
+            ${Object.keys(results).map(typeKey => {
+        const item = results[typeKey];
+        return `
+                    <div class="type-full-card" style="margin-bottom: 80px;">
+                        <div class="type-header">
+                            <img src="images/${item.id}.jpeg" alt="${item.id}" class="type-image">
+                            <h2 class="type-title">${item.name}</h2>
+                        </div>
+                        <div class="result-details">
+                            ${createBlock("■ 特徴", item.features)}
+                            ${createBlock("■ スイング傾向", item.swing)}
+                            ${createBlock("■ 注意点", item.notes)}
+                            ${createBlock("■ アドバイス", item.advice)}
+                        </div>
+                    </div>
+                `;
+    }).join('')}
+        </div>
+    `;
 
     if (forceError) {
+        // エラー時用の共有設定
+        const shareUrl = encodeURIComponent(window.location.href);
+        const shareText = encodeURIComponent(`ゴルフスイングタイプ診断であなたの身体特性をチェックしよう！ #ゴルフスイング診断 #4スタンス理論 #JoaGOLFstudio`);
+        const lineUrl = `https://line.me/R/msg/text/?${encodeURIComponent("ゴルフスイングタイプ診断で理想のフォームをチェック！\n" + window.location.href)}`;
+
         resultSection.innerHTML = `
             <div class="result-container">
                 <div class="type-header">
@@ -179,28 +203,7 @@ function showResult() {
                 </a>
 
                 <button id="show-all-types" class="main-btn" style="background:#cc217f; margin-top:20px;">全タイプ一覧を見る</button>
-
-                <div id="all-types-list" style="display:none; margin-top: 60px; text-align: left;">
-                    <hr style="margin: 60px 0; border: 0; border-top: 2px solid #eee;">
-                    <h2 style="text-align:center; margin-bottom: 40px;">全タイプ一覧</h2>
-                    ${Object.keys(results).map(typeKey => {
-            const item = results[typeKey];
-            return `
-                            <div class="type-full-card" style="margin-bottom: 80px;">
-                                <div class="type-header">
-                                    <img src="images/${item.id}.jpeg" alt="${item.id}" class="type-image">
-                                    <h2 class="type-title">${item.name}</h2>
-                                </div>
-                                <div class="result-details">
-                                    ${createBlock("■ 特徴", item.features)}
-                                    ${createBlock("■ スイング傾向", item.swing)}
-                                    ${createBlock("■ 注意点", item.notes)}
-                                    ${createBlock("■ アドバイス", item.advice)}
-                                </div>
-                            </div>
-                        `;
-        }).join('')}
-                </div>
+                ${allTypesHtml}
 
                 <button class="main-btn" style="background:#cc217f; margin-top:20px;" onclick="location.reload()">最初からやり直す</button>
 
@@ -208,13 +211,12 @@ function showResult() {
                     <p style="font-weight: bold; margin-bottom: 15px; font-size: 0.9rem;">このサイトを友達に共有する！</p>
                     <div style="display: flex; justify-content: center; gap: 10px; flex-wrap: wrap;">
                         <button id="copy-url-btn" class="main-btn" style="margin:0; flex:1; min-width:100px; background-color:#cc217f; font-size:0.85rem; padding:12px 5px; border:none; color:white;">URLコピー</button>
-                        <a href="${defaultLineUrl}" target="_blank" class="main-btn" style="margin:0; flex:1; min-width:100px; background-color:#06C755; font-size:0.85rem; padding:12px 5px; text-decoration:none; color:white;">LINE送る</a>
-                        <a href="https://twitter.com/intent/tweet?text=${defaultShareText}&url=${shareUrl}" target="_blank" class="main-btn" style="margin:0; flex:1; min-width:100px; background-color:#000000; font-size:0.85rem; padding:12px 5px; text-decoration:none; color:white;">Xでポスト</a>
+                        <a href="${lineUrl}" target="_blank" class="main-btn" style="margin:0; flex:1; min-width:100px; background-color:#06C755; font-size:0.85rem; padding:12px 5px; text-decoration:none; color:white;">LINE送る</a>
+                        <a href="https://twitter.com/intent/tweet?text=${shareText}&url=${shareUrl}" target="_blank" class="main-btn" style="margin:0; flex:1; min-width:100px; background-color:#000000; font-size:0.85rem; padding:12px 5px; text-decoration:none; color:white;">Xでポスト</a>
                     </div>
                 </div>
             </div>
         `;
-        // エラー画面用のイベント再設定
         setupResultEvents();
         window.scrollTo(0, 0);
         return;
@@ -223,8 +225,8 @@ function showResult() {
     // 通常の判定成功時
     const data = results[key];
     const shareText = encodeURIComponent(`私のゴルフスイングは【${data.name}】でした！\nあなたの身体特性に合った理想的なスイングタイプをチェックしよう！\n#ゴルフスイング診断 #4スタンス理論 #JoaGOLFstudio`);
-    const lineText = `私の診断結果は【${data.name}】でした！\n${window.location.href}`;
-    const lineUrl = `https://line.me/R/msg/text/?${encodeURIComponent(lineText)}`;
+    const lineUrl = `https://line.me/R/msg/text/?${encodeURIComponent(`私の診断結果は【${data.name}】でした！\n` + window.location.href)}`;
+    const shareUrl = encodeURIComponent(window.location.href);
 
     resultSection.innerHTML = `
         <div class="result-container">
@@ -246,28 +248,7 @@ function showResult() {
             </a>
 
             <button id="show-all-types" class="main-btn" style="background:#cc217f; margin-top:20px;">他のスイングタイプも見る</button>
-
-            <div id="all-types-list" style="display:none; margin-top: 60px; text-align: left;">
-                <hr style="margin: 60px 0; border: 0; border-top: 2px solid #eee;">
-                <h2 style="text-align:center; margin-bottom: 40px;">全タイプ一覧</h2>
-                ${Object.keys(results).map(typeKey => {
-        const item = results[typeKey];
-        return `
-                        <div class="type-full-card" style="margin-bottom: 80px;">
-                            <div class="type-header">
-                                <img src="images/${item.id}.jpeg" alt="${item.id}" class="type-image">
-                                <h2 class="type-title">${item.name}</h2>
-                            </div>
-                            <div class="result-details">
-                                ${createBlock("■ 特徴", item.features)}
-                                ${createBlock("■ スイング傾向", item.swing)}
-                                ${createBlock("■ 注意点", item.notes)}
-                                ${createBlock("■ アドバイス", item.advice)}
-                            </div>
-                        </div>
-                    `;
-    }).join('')}
-            </div>
+            ${allTypesHtml}
 
             <button class="main-btn" style="background:#cc217f; margin-top:20px;" onclick="location.reload()">最初からやり直す</button>
             <div class="share-section" style="margin: 50px 0 20px; padding: 20px; background: #fdfdfd; border-radius: 12px; border: 1px solid #eee;">
@@ -280,38 +261,6 @@ function showResult() {
             </div>
     `;
 
-    // 通常画面用のイベント再設定
     setupResultEvents();
     window.scrollTo(0, 0);
-}
-
-// ボタンのイベント（一覧表示・URLコピー）を一括設定する補助関数
-function setupResultEvents() {
-    const showAllBtn = document.getElementById('show-all-types');
-    const allTypesList = document.getElementById('all-types-list');
-    if (showAllBtn && allTypesList) {
-        showAllBtn.addEventListener('click', function () {
-            allTypesList.style.display = 'block';
-            this.style.display = 'none';
-            allTypesList.scrollIntoView({ behavior: 'smooth' });
-        });
-    }
-
-    const copyBtn = document.getElementById('copy-url-btn');
-    if (copyBtn) {
-        copyBtn.addEventListener('click', () => {
-            const url = window.location.href;
-            navigator.clipboard.writeText(url).then(() => {
-                const toast = document.createElement('div');
-                toast.className = 'copy-toast';
-                toast.innerText = "URLをコピーしました！";
-                document.body.appendChild(toast);
-                setTimeout(() => toast.classList.add('show'), 10);
-                setTimeout(() => {
-                    toast.classList.remove('show');
-                    setTimeout(() => toast.remove(), 500);
-                }, 2000);
-            });
-        });
-    }
 }
