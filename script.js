@@ -118,17 +118,14 @@ function showResult() {
 
     userAnswers.forEach((ans, i) => {
         const qNum = i + 1;
-        // STEP1: 前後重心判定 (Q1,2,3,4,9)
         if ([1, 2, 3, 4, 9].includes(qNum)) {
             const pts = (qNum === 2 || qNum === 3) ? 2 : 1;
             ans === 'A' ? scoreAB.A += pts : scoreAB.B += pts;
         }
-        // STEP2: 動作連動判定 (Q5,6,7,10,11)
         if ([5, 6, 7, 10, 11].includes(qNum)) {
             const pts = (qNum === 6 || qNum === 11) ? 2 : 1;
             ans === 'A' ? scoreCP.Cross += pts : scoreCP.Parallel += pts;
         }
-        // STEP3: 内外タイプ (Q8)
         if (qNum === 8) {
             type12 = (ans === 'A') ? "1" : "2";
         }
@@ -138,23 +135,17 @@ function showResult() {
     const isCross = scoreCP.Cross > scoreCP.Parallel;
     let key = isA ? (isCross ? "A1" : "A2") : (isCross ? "B2" : "B1");
 
-    // 注釈とエラー判定
     let subNote = "";
     if (key === "A1" && type12 === "2") subNote = "A2タイプの可能性もあります。";
     if (key === "A2" && type12 === "1") subNote = "A1タイプの可能性もあります。";
     if (key === "B1" && type12 === "2") subNote = "B2タイプの可能性もあります。";
     if (key === "B2" && type12 === "1") subNote = "B1タイプの可能性もあります。";
 
-    // スコアがどちらも1点差で拮抗しているか
     const isCloseAB = Math.abs(scoreAB.A - scoreAB.B) === 1;
     const isCloseCP = Math.abs(scoreCP.Cross - scoreCP.Parallel) === 1;
-
-    // 指の回答（type12）が判定タイプ（key）の本来の特性と矛盾しているか
-    // A1, B1なら本来は"1" / A2, B2なら本来は"2"
     const isMismatch = ((key === "A1" || key === "B1") && type12 === "2") ||
         ((key === "A2" || key === "B2") && type12 === "1");
 
-    // 「スコアがどちらも拮抗」かつ「指の回答が矛盾」している場合にエラー
     const forceError = (isCloseAB && isCloseCP && isMismatch);
 
     // 共通の全タイプ一覧HTMLを生成する部分
