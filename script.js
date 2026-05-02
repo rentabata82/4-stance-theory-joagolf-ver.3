@@ -148,7 +148,7 @@ function showResult() {
 
     const forceError = (isCloseAB && isCloseCP && isMismatch);
 
-    // 共通の全タイプ一覧HTMLを生成する部分
+    // 共通の全タイプ一覧HTMLを生成
     const allTypesHtml = `
         <div id="all-types-list" style="display:none; margin-top: 60px; text-align: left;">
             <hr style="margin: 60px 0; border: 0; border-top: 2px solid #eee;">
@@ -173,9 +173,11 @@ function showResult() {
         </div>
     `;
 
+    // 共有用URLの準備
+    const shareUrl = encodeURIComponent(window.location.href);
+
     if (forceError) {
-        // エラー時用の共有設定
-        const shareUrl = encodeURIComponent(window.location.href);
+        // エラー時のテキスト設定
         const shareText = encodeURIComponent(`ゴルフスイングタイプ診断であなたの身体特性をチェックしよう！ #ゴルフスイング診断 #4スタンス理論 #JoaGOLFstudio`);
         const lineUrl = `https://line.me/R/msg/text/?${encodeURIComponent("ゴルフスイングタイプ診断で理想のフォームをチェック！\n" + window.location.href)}`;
 
@@ -208,50 +210,48 @@ function showResult() {
                 </div>
             </div>
         `;
-        setupResultEvents();
-        window.scrollTo(0, 0);
-        return;
-    }
+    } else {
+        // 通常の判定成功時
+        const data = results[key];
+        const shareText = encodeURIComponent(`私のゴルフスイングは【${data.name}】でした！\nあなたの身体特性に合った理想的なスイングタイプをチェックしよう！\n#ゴルフスイング診断 #4スタンス理論 #JoaGOLFstudio`);
+        const lineUrl = `https://line.me/R/msg/text/?${encodeURIComponent(`私の診断結果は【${data.name}】でした！\n` + window.location.href)}`;
 
-    // 通常の判定成功時
-    const data = results[key];
-    const shareText = encodeURIComponent(`私のゴルフスイングは【${data.name}】でした！\nあなたの身体特性に合った理想的なスイングタイプをチェックしよう！\n#ゴルフスイング診断 #4スタンス理論 #JoaGOLFstudio`);
-    const lineUrl = `https://line.me/R/msg/text/?${encodeURIComponent(`私の診断結果は【${data.name}】でした！\n` + window.location.href)}`;
-    const shareUrl = encodeURIComponent(window.location.href);
+        resultSection.innerHTML = `
+            <div class="result-container">
+                <div class="type-header">
+                    <img src="images/${data.id}.jpeg" alt="${data.id}" class="type-image">
+                    <h2 class="type-title">${data.name}</h2>
+                    <p class="probability-text">の可能性が高いです！</p>
+                    <p class="disclaimer-text">※あくまで問診からの診断結果のため確定診断ではありません。</p>
+                    ${subNote ? `<div class="sub-note-text"><p style="color:#d9534f; font-weight:bold; margin:0; font-size:0.85rem;">※${subNote}</p></div>` : ""}
+                </div>
+                <div class="result-details">
+                    ${createBlock("■ 特徴", data.features)}
+                    ${createBlock("■ スイング傾向", data.swing)}
+                    ${createBlock("■ 注意点", data.notes)}
+                    ${createBlock("■ アドバイス", data.advice)}
+                </div>
+                <a href="https://rentabata82.github.io/Joa-GOLF-studio-store-v1/" target="_blank" rel="noopener noreferrer" class="main-btn" style="text-decoration: none; background-color:#cc217f; margin-top: 40px; display: block; line-height: 1.4;">
+                    タイプ別のスイング指導は<br>JoaGOLF studioへ！
+                </a>
 
-    resultSection.innerHTML = `
-        <div class="result-container">
-            <div class="type-header">
-                <img src="images/${data.id}.jpeg" alt="${data.id}" class="type-image">
-                <h2 class="type-title">${data.name}</h2>
-                <p class="probability-text">の可能性が高いです！</p>
-                <p class="disclaimer-text">※あくまで問診からの診断結果のため確定診断ではありません。</p>
-                ${subNote ? `<div class="sub-note-text"><p style="color:#d9534f; font-weight:bold; margin:0; font-size:0.85rem;">※${subNote}</p></div>` : ""}
-            </div>
-            <div class="result-details">
-                ${createBlock("■ 特徴", data.features)}
-                ${createBlock("■ スイング傾向", data.swing)}
-                ${createBlock("■ 注意点", data.notes)}
-                ${createBlock("■ アドバイス", data.advice)}
-            </div>
-            <a href="https://rentabata82.github.io/Joa-GOLF-studio-store-v1/" target="_blank" rel="noopener noreferrer" class="main-btn" style="text-decoration: none; background-color:#cc217f; margin-top: 40px; display: block; line-height: 1.4;">
-                タイプ別のスイング指導は<br>JoaGOLF studioへ！
-            </a>
+                <button id="show-all-types" class="main-btn" style="background:#cc217f; margin-top:20px;">他のスイングタイプも見る</button>
+                ${allTypesHtml}
 
-            <button id="show-all-types" class="main-btn" style="background:#cc217f; margin-top:20px;">他のスイングタイプも見る</button>
-            ${allTypesHtml}
-
-            <button class="main-btn" style="background:#cc217f; margin-top:20px;" onclick="location.reload()">最初からやり直す</button>
-            <div class="share-section" style="margin: 50px 0 20px; padding: 20px; background: #fdfdfd; border-radius: 12px; border: 1px solid #eee;">
-                <p style="font-weight: bold; margin-bottom: 15px; font-size: 0.9rem;">結果を友達に共有する！</p>
-                <div style="display: flex; justify-content: center; gap: 10px; flex-wrap: wrap;">
-                    <button id="copy-url-btn" class="main-btn" style="margin:0; flex:1; min-width:100px; background-color:#cc217f; font-size:0.85rem; padding:12px 5px; border:none; color:white;">URLコピー</button>
-                    <a href="${lineUrl}" target="_blank" class="main-btn" style="margin:0; flex:1; min-width:100px; background-color:#06C755; font-size:0.85rem; padding:12px 5px; text-decoration:none; color:white;">LINE送る</a>
-                    <a href="https://twitter.com/intent/tweet?text=${shareText}&url=${shareUrl}" target="_blank" class="main-btn" style="margin:0; flex:1; min-width:100px; background-color:#000000; font-size:0.85rem; padding:12px 5px; text-decoration:none; color:white;">Xでポスト</a>
+                <button class="main-btn" style="background:#cc217f; margin-top:20px;" onclick="location.reload()">最初からやり直す</button>
+                <div class="share-section" style="margin: 50px 0 20px; padding: 20px; background: #fdfdfd; border-radius: 12px; border: 1px solid #eee;">
+                    <p style="font-weight: bold; margin-bottom: 15px; font-size: 0.9rem;">結果を友達に共有する！</p>
+                    <div style="display: flex; justify-content: center; gap: 10px; flex-wrap: wrap;">
+                        <button id="copy-url-btn" class="main-btn" style="margin:0; flex:1; min-width:100px; background-color:#cc217f; font-size:0.85rem; padding:12px 5px; border:none; color:white;">URLコピー</button>
+                        <a href="${lineUrl}" target="_blank" class="main-btn" style="margin:0; flex:1; min-width:100px; background-color:#06C755; font-size:0.85rem; padding:12px 5px; text-decoration:none; color:white;">LINE送る</a>
+                        <a href="https://twitter.com/intent/tweet?text=${shareText}&url=${shareUrl}" target="_blank" class="main-btn" style="margin:0; flex:1; min-width:100px; background-color:#000000; font-size:0.85rem; padding:12px 5px; text-decoration:none; color:white;">Xでポスト</a>
+                    </div>
                 </div>
             </div>
-    `;
+        `;
+    }
 
+    // どちらの場合も最後にイベントを登録
     setupResultEvents();
     window.scrollTo(0, 0);
 }
