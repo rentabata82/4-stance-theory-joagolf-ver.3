@@ -36,6 +36,19 @@ header {
 /* =============================================
    1. 導入エリア
 ============================================== */
+.intro-image {
+    width: 100%;
+    max-width: 100%;
+    /* 横幅いっぱいに表示 */
+    height: auto;
+    border-radius: 12px;
+    /* 角を少し丸くして雰囲気を合わせる */
+    margin-bottom: 40px;
+    /* 下の「用意するもの」との間隔 */
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.05);
+    /* 軽い影をつけて浮かせる */
+}
+
 #intro .notice-box { 
     background: var(--white); 
     padding: 80px 50px; 
