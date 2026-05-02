@@ -161,17 +161,42 @@ function showResult() {
         resultSection.innerHTML = `
             <div class="result-container">
                 <div class="type-header">
-                    <!-- ここにエラー専用の画像を指定 -->
                     <img src="images/error-image.jpeg" alt="判定困難" class="type-image">
-                    
                     <h2 class="type-title" style="color:#d9534f; font-size:1.1rem;">判定が困難です</h2>
                     <p style="text-align:left; font-size:0.85rem; margin-top:25px; line-height:1.8; color:#636e72;">
                         大変申し訳ございません。問診のみでの診断が困難な回答のため、再度お試しいただくか、対面でのトレーナーによるタイプチェックをお勧めいたします。
                     </p>
                 </div>
+
+                <!-- 1. 店舗へのリンクを追加 -->
+                <a href="https://rentabata82.github.io/Joa-GOLF-studio-store-v1/" target="_blank" rel="noopener noreferrer" class="main-btn" style="text-decoration: none; background-color:#cc217f; margin-top: 20px; display: block; line-height: 1.4;">
+                    タイプ別のスイング指導は<br>JoaGOLF studioへ！
+                </a>
+
+                <!-- 2. 全タイプ表示ボタンを追加 -->
+                <button id="show-all-types" class="main-btn" style="background:#cc217f; margin-top:20px;">全タイプ一覧を見る</button>
+                <div id="all-types-list" style="display:none; margin-top: 60px; text-align: left;">
+                    <!-- ここに通常時と同じ全タイプ一覧の生成ロジックを入れる -->
+                    <h2 style="text-align:center; margin-bottom: 40px;">全タイプ一覧</h2>
+                    ${Object.keys(results).map(typeKey => {
+            const item = results[typeKey];
+            return `<div class="type-full-card">...（中略）...</div>`;
+        }).join('')}
+                </div>
+
                 <button class="main-btn" style="background:#cc217f; margin-top:20px;" onclick="location.reload()">最初からやり直す</button>
+
+                <!-- 3. 共有セクションを追加 -->
+                <div class="share-section" style="margin: 50px 0 20px; padding: 20px; background: #fdfdfd; border-radius: 12px; border: 1px solid #eee;">
+                    <p style="font-weight: bold; margin-bottom: 15px; font-size: 0.9rem;">このサイトを友達に共有する！</p>
+                    <div style="display: flex; justify-content: center; gap: 10px; flex-wrap: wrap;">
+                         <!-- SNSボタン等 -->
+                    </div>
+                </div>
             </div>
         `;
+
+        // ※注意：ボタンを表示した後は、イベントリスナー（クリック時の動き）も再度設定する必要があります。
         window.scrollTo(0, 0);
         return;
     }
