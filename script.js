@@ -145,14 +145,25 @@ function showResult() {
     if (key === "B1" && type12 === "2") subNote = "B2タイプの可能性もあります。";
     if (key === "B2" && type12 === "1") subNote = "B1タイプの可能性もあります。";
 
+    // スコアがどちらも1点差で拮抗しているか
     const isCloseAB = Math.abs(scoreAB.A - scoreAB.B) === 1;
     const isCloseCP = Math.abs(scoreCP.Cross - scoreCP.Parallel) === 1;
-    const forceError = (isCloseAB && isCloseCP && subNote !== "" && type12 === "1");
+
+    // 指の回答（type12）が判定タイプ（key）の本来の特性と矛盾しているか
+    // A1, B1なら本来は"1" / A2, B2なら本来は"2"
+    const isMismatch = ((key === "A1" || key === "B1") && type12 === "2") ||
+        ((key === "A2" || key === "B2") && type12 === "1");
+
+    // 「スコアがどちらも拮抗」かつ「指の回答が矛盾」している場合にエラー
+    const forceError = (isCloseAB && isCloseCP && isMismatch);
 
     if (forceError) {
         resultSection.innerHTML = `
             <div class="result-container">
                 <div class="type-header">
+                    <!-- ここにエラー専用の画像を指定 -->
+                    <img src="images/error-image.jpeg" alt="判定困難" class="type-image">
+                    
                     <h2 class="type-title" style="color:#d9534f; font-size:1.1rem;">判定が困難です</h2>
                     <p style="text-align:left; font-size:0.85rem; margin-top:25px; line-height:1.8; color:#636e72;">
                         大変申し訳ございません。問診のみでの診断が困難な回答のため、再度お試しいただくか、対面でのトレーナーによるタイプチェックをお勧めいたします。
@@ -228,8 +239,8 @@ function showResult() {
             </div>
     `;
 
-    // 「他のスイングタイプについても見る」のクリック処理
-    document.getElementById('show-all-types').addEventListener('click', function () {
+   // 「他のスイングタイプについても見る」のクリック処理
+    document.getElementById('show-all-types').addEventListener('click', function() {
         document.getElementById('all-types-list').style.display = 'block';
         this.style.display = 'none';
         document.getElementById('all-types-list').scrollIntoView({ behavior: 'smooth' });
@@ -245,17 +256,17 @@ function showResult() {
             toast.innerText = "URLをコピーしました！";
             document.body.appendChild(toast);
 
-            // 表示
-            setTimeout(() => toast.classList.add('show'), 10);
+        // 表示
+        setTimeout(() => toast.classList.add('show'), 10);
 
-            // 2秒後に消して削除
-            setTimeout(() => {
-                toast.classList.remove('show');
-                setTimeout(() => toast.remove(), 500);
-            }, 2000);
-            // --- ここまで ---
-        });
+        // 2秒後に消して削除
+        setTimeout(() => {
+            toast.classList.remove('show');
+            setTimeout(() => toast.remove(), 500);
+        }, 2000);
+        // --- ここまで ---
     });
+});
 
     window.scrollTo(0, 0);
 }
