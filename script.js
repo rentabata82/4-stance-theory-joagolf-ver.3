@@ -47,10 +47,10 @@ const results = {
     }
 };
 
-
 let currentStep = 0;
 let userAnswers = [];
 
+// DOM要素の取得
 const quizSection = document.getElementById('quiz-area');
 const resultSection = document.getElementById('result-area');
 const qText = document.getElementById('question-text');
@@ -72,9 +72,9 @@ document.getElementById('start-btn').addEventListener('click', () => {
 function showQuestion() {
     const q = questions[currentStep];
     qText.innerText = q.text;
-    textA.innerText = q.a; 
+    textA.innerText = q.a;
     textB.innerText = q.b;
-    
+
     btnA.classList.toggle('selected', userAnswers[currentStep] === 'A');
     btnB.classList.toggle('selected', userAnswers[currentStep] === 'B');
 
@@ -107,46 +107,66 @@ nextBtn.addEventListener('click', () => {
     if (currentStep < questions.length - 1) { currentStep++; showQuestion(); }
 });
 
+// 診断ロジック
 function showResult() {
     quizSection.style.display = 'none';
     resultSection.style.display = 'block';
 
-    let scores = { A: 0, B: 0, cross: 0, parallel: 0, type1: 0, type2: 0 };
+    let scoreAB = { A: 0, B: 0 };
+    let scoreCP = { Cross: 0, Parallel: 0 };
+    let type12 = "";
 
     userAnswers.forEach((ans, i) => {
-        const type = questions[i].type;
-        if (type === "AB") ans === 'A' ? scores.A++ : scores.B++;
-        if (type === "CP") ans === 'A' ? scores.cross++ : scores.parallel++;
-        if (type === "12") ans === 'A' ? scores.type1++ : scores.type2++;
+        const qNum = i + 1;
+        // STEP1: 前後重心判定 (Q1,2,3,4,9)
+        if ([1, 2, 3, 4, 9].includes(qNum)) {
+            const pts = (qNum === 2 || qNum === 3) ? 2 : 1;
+            ans === 'A' ? scoreAB.A += pts : scoreAB.B += pts;
+        }
+        // STEP2: 動作連動判定 (Q5,6,7,10,11)
+        if ([5, 6, 7, 10, 11].includes(qNum)) {
+            const pts = (qNum === 6 || qNum === 11) ? 2 : 1;
+            ans === 'A' ? scoreCP.Cross += pts : scoreCP.Parallel += pts;
+        }
+        // STEP3: 内外タイプ (Q8)
+        if (qNum === 8) {
+            type12 = (ans === 'A') ? "1" : "2";
+        }
     });
 
-    const isA = scores.A >= scores.B;
-    const isCross = scores.cross >= scores.parallel;
-    const isType1Input = scores.type1 >= scores.type2;
+    const isA = scoreAB.A > scoreAB.B;
+    const isCross = scoreCP.Cross > scoreCP.Parallel;
+    let key = isA ? (isCross ? "A1" : "A2") : (isCross ? "B2" : "B1");
 
-    let key = "";
+    // 注釈とエラー判定
     let subNote = "";
+    if (key === "A1" && type12 === "2") subNote = "A2タイプの可能性もあります。";
+    if (key === "A2" && type12 === "1") subNote = "A1タイプの可能性もあります。";
+    if (key === "B1" && type12 === "2") subNote = "B2タイプの可能性もあります。";
+    if (key === "B2" && type12 === "1") subNote = "B1タイプの可能性もあります。";
 
-    if (isA) {
-        key = isCross ? "A1" : "A2";
-        if (key === "A1" && !isType1Input) subNote = "A2タイプの可能性もあります！";
-        else if (key === "A2" && isType1Input) subNote = "A1タイプの可能性もあります！";
-    } else {
-        key = isCross ? "B2" : "B1";
-        if (key === "B1" && !isType1Input) subNote = "B2タイプの可能性もあります！";
-        else if (key === "B2" && isType1Input) subNote = "B1タイプの可能性もあります！";
+    const isCloseAB = Math.abs(scoreAB.A - scoreAB.B) === 1;
+    const isCloseCP = Math.abs(scoreCP.Cross - scoreCP.Parallel) === 1;
+    const forceError = (isCloseAB && isCloseCP && subNote !== "" && type12 === "1");
+
+    if (forceError) {
+        resultSection.innerHTML = `
+            <div class="result-container">
+                <div class="type-header">
+                    <h2 class="type-title" style="color:#d9534f; font-size:1.1rem;">判定が困難です</h2>
+                    <p style="text-align:left; font-size:0.85rem; margin-top:25px; line-height:1.8; color:#636e72;">
+                        大変申し訳ございません。問診のみでの診断が困難な回答のため、再度お試しいただくか、対面でのトレーナーによるタイプチェックをお勧めいたします。
+                    </p>
+                </div>
+                <button class="main-btn" style="background:#cc217f; margin-top:20px;" onclick="location.reload()">最初からやり直す</button>
+            </div>
+        `;
+        window.scrollTo(0, 0);
+        return;
     }
 
     const data = results[key];
-
-    const shareText = encodeURIComponent(`私のゴルフスイングは【${data.name}】でした！\nあなたの身体特性に合った理想的なスイングタイプをチェックしよう！\n#ゴルフスイング診断 #4スタンス理論 #JoaGOLFstudio`);
-    const shareUrl = encodeURIComponent(window.location.href);
-
-    // 【追加】LINE用のテキストセット形式
-    const lineText = `私の診断結果は【${data.name}】でした！\n${window.location.href}`;
-    const lineUrl = `https://line.me/R/msg/text/?${encodeURIComponent(lineText)}`;
-
-    /* --- script.js の showResult 関数内を修正 --- */
+    const lineUrl = `https://line.me/R/msg/text/?${encodeURIComponent("私の診断結果は【" + data.name + "】でした！\n" + window.location.href)}`;
 
     resultSection.innerHTML = `
         <div class="result-container">
@@ -154,91 +174,32 @@ function showResult() {
                 <img src="images/${data.id}.jpeg" alt="${data.id}" class="type-image">
                 <h2 class="type-title">${data.name}</h2>
                 <p class="probability-text">の可能性が高いです！</p>
-                
-                <p class="disclaimer-text">
-                    ※あくまで問診からの診断結果のため確定診断ではありません。
-                </p>
-
-                ${subNote ? `<div class="sub-note-text"><p style="color:#d9534f; font-weight:bold; margin:0;">※${subNote}</p></div>` : ""}
+                <p class="disclaimer-text">※あくまで問診からの診断結果のため確定診断ではありません。</p>
+                ${subNote ? `<div class="sub-note-text"><p style="color:#d9534f; font-weight:bold; margin:0; font-size:0.85rem;">※${subNote}</p></div>` : ""}
             </div>
-
             <div class="result-details">
                 ${createBlock("■ 特徴", data.features)}
                 ${createBlock("■ スイング傾向", data.swing)}
                 ${createBlock("■ 注意点", data.notes)}
                 ${createBlock("■ アドバイス", data.advice)}
             </div>
-
-            <a href="https://rentabata82.github.io/Joa-GOLF-studio-store-v1/" target="_blank" rel="noopener noreferrer" class="main-btn" style="text-decoration: none; background-color:#cc217f; margin-top: 40px; display: block; line-height: 1.4;">
-                タイプ別のスイング指導は<br>JoaGOLF studioへ！
-            </a>
-
-            <button id="show-all-types" class="main-btn" style="background:#cc217f; margin-top:20px;">他のスイングタイプも見る</button>
-            
-            <div id="all-types-list" style="display:none; margin-top: 60px; text-align: left;">
-                <hr style="margin: 60px 0; border: 0; border-top: 2px solid #eee;">
-                <h2 style="text-align:center; margin-bottom: 40px;">全タイプ一覧</h2>
-                
-                ${Object.keys(results).map(typeKey => {
-                    const item = results[typeKey];
-                    return `
-                        <div class="type-full-card" style="margin-bottom: 80px;">
-                            <div class="type-header">
-                                <img src="images/${item.id}.jpeg" alt="${item.id}" class="type-image">
-                                <h2 class="type-title">${item.name}</h2>
-                            </div>
-                            <div class="result-details">
-                                ${createBlock("■ 特徴", item.features)}
-                                ${createBlock("■ スイング傾向", item.swing)}
-                                ${createBlock("■ 注意点", item.notes)}
-                                ${createBlock("■ アドバイス", item.advice)}
-                            </div>
-                        </div>
-                    `;
-                }).join('')}
-            </div>
-
+            <a href="https://rentabata82.github.io/Joa-GOLF-studio-store-v1/" target="_blank" rel="noopener noreferrer" class="main-btn" style="text-decoration: none; background-color:#cc217f; margin-top: 40px; display: block;">タイプ別のスイング指導は<br>JoaGOLF studioへ！</a>
             <button class="main-btn" style="background:#cc217f; margin-top:20px;" onclick="location.reload()">最初からやり直す</button>
-
-            <div class="share-section" style="margin: 50px 0 20px; padding: 20px; background: #fdfdfd; border-radius: 12px; border: 1px solid #eee;">
-                <p style="font-weight: bold; margin-bottom: 15px; font-size: 0.9rem;">結果を友達に共有する！</p>
-                <div style="display: flex; justify-content: center; gap: 10px; flex-wrap: wrap;">
-                    <button id="copy-url-btn" class="main-btn" style="margin:0; flex:1; min-width:100px; background-color:#cc217f; font-size:0.85rem; padding:12px 5px; border:none; color:white;">URLコピー</button>
-                    <a href="${lineUrl}" target="_blank" class="main-btn" style="margin:0; flex:1; min-width:100px; background-color:#06C755; font-size:0.85rem; padding:12px 5px; text-decoration:none; color:white;">LINE送る</a>
-                    <a href="https://twitter.com/intent/tweet?text=${shareText}&url=${shareUrl}" target="_blank" class="main-btn" style="margin:0; flex:1; min-width:100px; background-color:#000000; font-size:0.85rem; padding:12px 5px; text-decoration:none; color:white;">Xでポスト</a>
+            <div class="share-section" style="margin-top:50px; padding:20px; background:#fdfdfd; border-radius:12px; border:1px solid #eee;">
+                <p style="font-weight:bold; margin-bottom:15px; font-size:0.9rem;">結果を友達に共有する！</p>
+                <div style="display:flex; justify-content:center; gap:10px; flex-wrap:wrap;">
+                    <button id="copy-url-btn" class="main-btn" style="margin:0; flex:1; min-width:100px; font-size:0.85rem;">URLコピー</button>
+                    <a href="${lineUrl}" target="_blank" class="main-btn" style="margin:0; flex:1; min-width:100px; background-color:#06C755; font-size:0.85rem; text-decoration:none; color:white;">LINE送る</a>
                 </div>
             </div>
         </div>
     `;
 
-    // 「他のスイングタイプについても見る」のクリック処理
-    document.getElementById('show-all-types').addEventListener('click', function() {
-        document.getElementById('all-types-list').style.display = 'block';
-        this.style.display = 'none';
-        document.getElementById('all-types-list').scrollIntoView({ behavior: 'smooth' });
-    });
-
-    /// URLコピーボタンのイベント
     document.getElementById('copy-url-btn').addEventListener('click', () => {
-        const url = window.location.href;
-        navigator.clipboard.writeText(url).then(() => {
-            // --- ここからデザイン用の書き換え ---
-            const toast = document.createElement('div');
-            toast.className = 'copy-toast';
-            toast.innerText = "URLをコピーしました！";
-            document.body.appendChild(toast);
-
-        // 表示
-        setTimeout(() => toast.classList.add('show'), 10);
-
-        // 2秒後に消して削除
-        setTimeout(() => {
-            toast.classList.remove('show');
-            setTimeout(() => toast.remove(), 500);
-        }, 2000);
-        // --- ここまで ---
+        navigator.clipboard.writeText(window.location.href).then(() => {
+            alert("URLをコピーしました！");
+        });
     });
-});
 
     window.scrollTo(0, 0);
 }
