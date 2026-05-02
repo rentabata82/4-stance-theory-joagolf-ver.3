@@ -155,7 +155,7 @@ function showResult() {
                 <h2 class="type-title">${data.name}</h2>
                 <p class="probability-text">の可能性が高いです！</p>
                 
-                <p style="font-size: 0.75rem; color: #636e72; margin-top: -5px; margin-bottom: 20px;">
+                <p class="disclaimer-text">
                     ※あくまで問診からの診断結果のため確定診断ではありません。
                 </p>
 
