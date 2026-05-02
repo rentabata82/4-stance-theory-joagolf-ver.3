@@ -37,32 +37,21 @@ header {
    1. 導入エリア
 ============================================== */
 .intro-image {
-    width: calc(100% + 100px);
-    /* 左右のpadding分（50px × 2）を足す */
-    margin-left: -50px;
-    /* 左側のpaddingを打ち消す */
-    margin-right: -50px;
-    /* 右側のpaddingを打ち消す */
-    max-width: none;
-    /* max-widthの制限を解除 */
-
+    width: 100%;
+    /* 親要素の余白（padding）の内側に100%で収まる */
+    max-width: 100%;
+    /* はみ出し防止 */
     height: auto;
+    /* 比率を維持 */
     display: block;
-    margin-top: 0;
-    /* 説明文との間隔調整（お好みで） */
-    margin-bottom: 40px;
-    /* 下のコンテンツとの間隔 */
+    /* 下に余計な隙間を作らない */
+    margin: 0 auto 40px;
+    /* 左右中央に配置し、下に40pxの余白を作る */
+    border-radius: 12px;
+    /* 下のボックスと雰囲気を合わせるために角を丸くする */
 }
 
-/* スマホ用の調整（スマホではpaddingが20pxになっているため） */
-@media (max-width: 500px) {
-    .intro-image {
-        width: calc(100% + 40px);
-        /* スマホのpadding 20px × 2 */
-        margin-left: -20px;
-        margin-right: -20px;
-    }
-}
+/* スマホ用の個別の調整（ネガティブマージン）は不要になったので削除してOKです */
 
 #intro .notice-box { 
     background: var(--white); 
