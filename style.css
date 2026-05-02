@@ -313,8 +313,11 @@ footer { text-align: center; padding: 40px; color: #999; font-size: 0.8rem; }
 /* スマホ用の微調整 */
 @media (max-width: 500px) {
     .disclaimer-text {
-        /* 横幅に合わせてフォントサイズを流動的に小さくする */
-        font-size: clamp(0.5rem, 3.1vw, 0.7rem);
+        /* vwの値を 3.1 → 2.8 に下げ、最大値も 0.65rem 程度に抑えます */
+        font-size: clamp(0.45rem, 2.8vw, 0.65rem);
+
+        /* 念のため、左右に少しだけ内側の余白を作って枠ギリギリを防ぎます */
+        padding: 0 5px;
     }
 }
 
